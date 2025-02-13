@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmojiQuiz</title>
     <style>
+        /* (스타일은 이전 코드와 동일하므로 생략) */
         /* Reset and Base Styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -242,12 +243,13 @@
         <div id="scoreboard">
             <div>Score: <span id="score">0</span></div>
             <div>Round: <span id="round">1</span></div>
-             <div>High Score: <span id="high-score">0</span></div>
+            <div>High Score: <span id="high-score">0</span></div>
         </div>
 
         <div id="result"></div>
         <button id="next-button" style="display: none;">Next</button>
-        <button id="restart-button">Restart</button>
+        <!-- Restart Button initially hidden -->
+        <button id="restart-button" style="display: none;">Restart</button>
 
         <!-- Hint Modal -->
         <div id="hint-modal">
@@ -259,251 +261,240 @@
     </div>
 
     <script>
-      // DOM Elements
-      const emojiDisplay = document.getElementById('emoji-display');
-      const answerInput = document.getElementById('answer-input');
-      const submitButton = document.getElementById('submit-button');
-      const resultDisplay = document.getElementById('result');
-      const scoreDisplay = document.getElementById('score');
-      const roundDisplay = document.getElementById('round');
-      const highScoreDisplay = document.getElementById('high-score');
-      const nextButton = document.getElementById('next-button');
-      const restartButton = document.getElementById('restart-button');
-      const hintButton = document.getElementById('hint-button');
-      const hintModal = document.getElementById('hint-modal');
-      const hintText = document.getElementById('hint-text');
-      const closeHintButton = document.getElementById('close-hint');
+        // --- DOM Elements ---
+        const emojiDisplay = document.getElementById('emoji-display');
+        const answerInput = document.getElementById('answer-input');
+        const submitButton = document.getElementById('submit-button');
+        const resultDisplay = document.getElementById('result');
+        const scoreDisplay = document.getElementById('score');
+        const roundDisplay = document.getElementById('round');
+        const highScoreDisplay = document.getElementById('high-score');
+        const nextButton = document.getElementById('next-button');
+        const restartButton = document.getElementById('restart-button');
+        const hintButton = document.getElementById('hint-button');
+        const hintModal = document.getElementById('hint-modal');
+        const hintText = document.getElementById('hint-text');
+        const closeHintButton = document.getElementById('close-hint');
 
-      // Game Data and Constants
-      const emojiData = [
-          { emoji: "😀", answer: "happy", hint: "Feeling good" },
-          { emoji: "😂", answer: "lol", hint: "Laughing out loud" },
-          { emoji: "👍", answer: "thumbs up", hint: "Positive gesture" },
-          { emoji: "🎉", answer: "celebration", hint: "Party time" },
-          { emoji: "🍕", answer: "pizza", hint: "Italian food" },
-          { emoji: "🐶", answer: "dog", hint: "Man's best friend"},
-          { emoji: "🐱", answer: "cat", hint: "Feline friend"},
-          { emoji: "🍎", answer: "apple", hint: "A fruit"},
-          { emoji: "🍌", answer: "banana", hint: "Yellow fruit"},
-          { emoji: "🎂", answer: "cake", hint: "Dessert"}
-      ];
-      const MAX_ROUNDS = 5;
-      const NUM_EMOJIS_PER_ROUND = 3;
-      const HINT_COST = 2; // 힌트 사용 비용
+        // --- Game Data and Constants ---
+        const emojiData = [
+            { emoji: "😀", answer: "happy", hint: "Feeling good" },
+            { emoji: "😂", answer: "lol", hint: "Laughing out loud" },
+            { emoji: "👍", answer: "thumbs up", hint: "Positive gesture" },
+            { emoji: "🎉", answer: "celebration", hint: "Party time" },
+            { emoji: "🍕", answer: "pizza", hint: "Italian food" },
+            { emoji: "🐶", answer: "dog", hint: "Man's best friend" },
+            { emoji: "🐱", answer: "cat", hint: "Feline friend" },
+            { emoji: "🍎", answer: "apple", hint: "A fruit" },
+            { emoji: "🍌", answer: "banana", hint: "Yellow fruit" },
+            { emoji: "🎂", answer: "cake", hint: "Dessert" }
+        ];
+        const NUM_EMOJIS_PER_ROUND = 3;
+        const HINT_COST = 2; // 힌트 사용 비용
+        const POINTS_PER_CORRECT_ANSWER = 5;
 
-      // Game State
-      let currentRound = 1;
-      let currentScore = 0;
-      let highScore = getHighScore(); // Get high score from URL or cookie
-      let currentEmojiIndices = []; // Store indices of currently displayed emojis
-      let selectedEmojiIndex = null; // 현재 선택된 이모지
+        // --- Game State ---
+        let currentRound = 1;
+        let currentScore = 0;
+        let highScore = getHighScore(); // URL 또는 localStorage에서 최고 점수 가져오기
+        let currentEmojiIndices = [];
+        let selectedEmojiIndex = null;
+        let isGameOver = false; //게임오버 상태 변수
 
+        // --- Web Audio API Setup ---
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-      // --- Helper Functions ---
-      // Function to get high score (from URL, then cookie, then default to 0)
-      function getHighScore() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let score = parseInt(urlParams.get('score'));
+        // Function to generate a simple sound (beep)
+        function playBeep(frequency, duration, volume, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
 
-        if (!isNaN(score)) {
-            return score;
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
         }
 
-        score = parseInt(document.cookie.replace(/(?:(?:^|.*;\s*)highScore\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
-        return isNaN(score) ? 0 : score;
-      }
+        // --- Helper Functions ---
+        // Get high score (from URL, then localStorage, then default to 0)
+        function getHighScore() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let score = parseInt(urlParams.get('score'));
 
-      // Function to save high score (both to cookie and URL)
-      function saveHighScore(score) {
-          document.cookie = `highScore=${score}; max-age=${60 * 60 * 24 * 365}; path=/; SameSite=Lax`; // 1 year
-          // Update URL (without reloading the page)
-          const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?score=${score}`;
-          window.history.pushState({ path: newurl }, '', newurl);
-      }
-      // Function to play sound
-      function playSound(soundFile) {
-          const audio = new Audio(soundFile);
-          audio.play();
-      }
+            if (!isNaN(score)) {
+                return score;
+            }
 
+            score = parseInt(localStorage.getItem('highScore'));
+            return isNaN(score) ? 0 : score;
+        }
 
+        // Save high score (to localStorage and URL)
+        function saveHighScore(score) {
+            localStorage.setItem('highScore', score);
+            const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?score=${score}`;
+            window.history.replaceState({ path: newurl }, '', newurl); // Use replaceState instead of pushState
+        }
 
-      // --- Game Logic Functions ---
+        // --- Game Logic Functions ---
 
-      // 1. 이모지 표시 (Display Emojis)
-      function displayEmojis() {
-          emojiDisplay.innerHTML = ''; // Clear previous emojis
-          currentEmojiIndices = []; // Reset current emoji indices
+        function displayEmojis() {
+            emojiDisplay.innerHTML = '';
+            currentEmojiIndices = [];
 
-          while (currentEmojiIndices.length < NUM_EMOJIS_PER_ROUND) {
-              const randomIndex = Math.floor(Math.random() * emojiData.length);
-              if (!currentEmojiIndices.includes(randomIndex)) {
-                  currentEmojiIndices.push(randomIndex);
-                  const emojiCard = document.createElement('div');
-                  emojiCard.classList.add('emoji-card');
-                  emojiCard.textContent = emojiData[randomIndex].emoji;
-                  emojiCard.dataset.index = randomIndex; // Store index for later use
+            while (currentEmojiIndices.length < NUM_EMOJIS_PER_ROUND) {
+                const randomIndex = Math.floor(Math.random() * emojiData.length);
+                if (!currentEmojiIndices.includes(randomIndex)) {
+                    currentEmojiIndices.push(randomIndex);
+                    const emojiCard = document.createElement('div');
+                    emojiCard.classList.add('emoji-card');
+                    emojiCard.textContent = emojiData[randomIndex].emoji;
+                    emojiCard.dataset.index = randomIndex;
+                    emojiCard.addEventListener('click', selectEmoji);
+                    emojiDisplay.appendChild(emojiCard);
+                }
+            }
+        }
 
-                  emojiCard.addEventListener('click', selectEmoji); // Add click listener
-                  emojiDisplay.appendChild(emojiCard);
-              }
-          }
-      }
+        function selectEmoji(event) {
+            const previouslySelected = document.querySelector('.emoji-card.selected');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('selected');
+            }
+            const clickedEmoji = event.target;
+            clickedEmoji.classList.add('selected');
+            selectedEmojiIndex = parseInt(clickedEmoji.dataset.index);
+        }
 
+        function checkAnswer() {
+            if (isGameOver) return; // Do nothing if game is over
 
-      // 2. 이모지 선택 (Select Emoji)
-      function selectEmoji(event) {
-          // Deselect any previously selected emoji
-          const previouslySelected = document.querySelector('.emoji-card.selected');
-          if (previouslySelected) {
-              previouslySelected.classList.remove('selected');
-          }
-
-          // Select the clicked emoji
-          const clickedEmoji = event.target;
-          clickedEmoji.classList.add('selected');
-          selectedEmojiIndex = parseInt(clickedEmoji.dataset.index);
-      }
-
-
-      // 3. 정답 확인 (Check Answer)
-      function checkAnswer() {
-
-          if (selectedEmojiIndex === null) {
-              resultDisplay.textContent = 'Please select an emoji.';
-              resultDisplay.style.color = '#ffc107'; // Warning color
-              return;
-          }
-          const userAnswer = answerInput.value.trim().toLowerCase();
-          const correctAnswer = emojiData[selectedEmojiIndex].answer.toLowerCase();
-
-          if (userAnswer === correctAnswer) {
-              resultDisplay.textContent = 'Correct!';
-              resultDisplay.classList.add('correct'); // Add class for animation
-              resultDisplay.classList.remove('incorrect');
-              playSound('correct.mp3'); // Add sound effect
-              currentScore += (round * 5);
-              scoreDisplay.textContent = currentScore;
-
-              if (currentScore > highScore) {
-                  highScore = currentScore;
-                  highScoreDisplay.textContent = highScore;
-                  saveHighScore(highScore);
-              }
-
-              if (currentRound < MAX_ROUNDS) {
-                  nextButton.style.display = 'inline-block';
-              } else {
-                  resultDisplay.textContent = `Game Over! Final score: ${currentScore}`;
-                  restartButton.style.display = 'inline-block';
-              }
-
-          } else {
-              resultDisplay.textContent = `Incorrect. The answer was ${correctAnswer}.`;
-              resultDisplay.classList.add('incorrect');
-              playSound('incorrect.mp3'); // Add sound effect
-          }
-
-
-          // Disable further input until next round
-          answerInput.disabled = true;
-          submitButton.disabled = true;
-          hintButton.disabled = true;
-          // Remove selected class from all emojis
-          document.querySelectorAll('.emoji-card').forEach(card => {
-            card.classList.remove('selected');
-            card.style.pointerEvents = 'none'; // Disable clicks
-
-          });
-
-      }
-
-
-
-      // 4. 다음 라운드 (Next Round)
-      function nextRound() {
-          currentRound++;
-          roundDisplay.textContent = currentRound;
-          resultDisplay.textContent = ''; // Clear result
-          resultDisplay.classList.remove('correct', 'incorrect');
-          answerInput.value = '';
-          answerInput.disabled = false;
-          submitButton.disabled = false;
-          hintButton.disabled = false;
-          nextButton.style.display = 'none';
-          selectedEmojiIndex = null; // Reset selected emoji
-           document.querySelectorAll('.emoji-card').forEach(card => {
-            card.style.pointerEvents = 'auto'; // Re-enable clicks
-           });
-
-
-          displayEmojis(); // Display new emojis
-      }
-
-
-
-      // 5. 게임 재시작 (Restart Game)
-      function restartGame() {
-          currentRound = 1;
-          currentScore = 0;
-          roundDisplay.textContent = currentRound;
-          scoreDisplay.textContent = currentScore;
-          resultDisplay.textContent = '';
-          answerInput.value = '';
-          answerInput.disabled = false;
-          submitButton.disabled = false;
-          hintButton.disabled = false;
-          nextButton.style.display = 'none';
-          restartButton.style.display = 'none';
-          displayEmojis();
-          document.querySelectorAll('.emoji-card').forEach(card => {
-            card.style.pointerEvents = 'auto'; // Re-enable clicks
-           });
-      }
-
-      // 6. 힌트 보기
-      function showHint() {
-
-          if (selectedEmojiIndex === null) {
-                resultDisplay.textContent = 'Please select an emoji to get a hint.';
-                resultDisplay.style.color = '#ffc107'; // Warning color
+            if (selectedEmojiIndex === null) {
+                resultDisplay.textContent = 'Please select an emoji.';
+                resultDisplay.style.color = '#ffc107';
                 return;
-          }
+            }
 
-          if(currentScore >= HINT_COST){
-            currentScore -= HINT_COST;
-            scoreDisplay.textContent = currentScore;
-            hintText.textContent = `Hint: ${emojiData[selectedEmojiIndex].hint}`;
-            hintModal.style.display = 'block';
-          } else {
-            resultDisplay.textContent = `Not enough points for a hint. Need ${HINT_COST} points.`;
-            resultDisplay.style.color = '#ffc107'
-          }
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const correctAnswer = emojiData[selectedEmojiIndex].answer.toLowerCase();
 
-      }
-
+            if (userAnswer === correctAnswer) {
+                resultDisplay.textContent = 'Correct!';
+                resultDisplay.classList.add('correct');
+                resultDisplay.classList.remove('incorrect');
+                playBeep(440, 0.2, 0.5); // Correct beep (A4 note)
+                currentScore += currentRound * POINTS_PER_CORRECT_ANSWER;
+                scoreDisplay.textContent = currentScore;
 
 
-      // --- Event Listeners ---
-      submitButton.addEventListener('click', checkAnswer);
-      nextButton.addEventListener('click', nextRound);
-      restartButton.addEventListener('click', restartGame);
-      hintButton.addEventListener('click', showHint);
-      closeHintButton.addEventListener('click', () => hintModal.style.display = 'none');
+                if (currentScore > highScore) {
+                    highScore = currentScore;
+                    highScoreDisplay.textContent = highScore;
+                    saveHighScore(highScore);
+                }
+                nextButton.style.display = 'inline-block'; // Next button
 
-      // --- Initial Setup ---
-      highScoreDisplay.textContent = highScore; // Display high score
-      displayEmojis(); // Start the game by displaying emojis
+            } else {
+                resultDisplay.textContent = `Incorrect. The answer was ${correctAnswer}.`;
+                resultDisplay.classList.add('incorrect');
+                playBeep(220, 0.2, 0.5); // Incorrect beep (A3 note)
+                // Game Over
+                isGameOver = true; // Set game over state
+                resultDisplay.textContent += " Game Over!";
+                restartButton.style.display = "inline-block"; // Show Restart button
 
+            }
 
-      // --- Prevent Accidental Reloads ---
-      window.addEventListener('beforeunload', function (e) {
-        if (currentRound > 1 || currentScore > 0){ // Prevent closing when game is active
-          e.preventDefault();
-          e.returnValue = ''; // Required for some browsers
+            answerInput.disabled = true;
+            submitButton.disabled = true;
+            hintButton.disabled = true;
+             document.querySelectorAll('.emoji-card').forEach(card => {
+                card.classList.remove('selected');
+                card.style.pointerEvents = 'none';
+            });
         }
 
-      });
+        function nextRound() {
+            currentRound++;
+            roundDisplay.textContent = currentRound;
+            resultDisplay.textContent = '';
+            resultDisplay.classList.remove('correct', 'incorrect');
+            answerInput.value = '';
+            answerInput.disabled = false;
+            submitButton.disabled = false;
+            hintButton.disabled = false;
+            nextButton.style.display = 'none';
+            selectedEmojiIndex = null; // Reset
+            document.querySelectorAll('.emoji-card').forEach(card => {
+                card.style.pointerEvents = 'auto'; // Re-enable clicks
+            });
+            displayEmojis();
+        }
+
+        function restartGame() {
+            currentRound = 1;
+            currentScore = 0;
+            isGameOver = false; // Reset game over state
+            roundDisplay.textContent = currentRound;
+            scoreDisplay.textContent = currentScore;
+            resultDisplay.textContent = '';
+            answerInput.value = '';
+            answerInput.disabled = false;
+            submitButton.disabled = false;
+            hintButton.disabled = false;
+            nextButton.style.display = 'none';
+            restartButton.style.display = 'none'; // Hide restart button
+            displayEmojis();
+            document.querySelectorAll('.emoji-card').forEach(card => {
+                card.style.pointerEvents = 'auto';
+            });
+
+        }
+
+        function showHint() {
+             if (isGameOver) return; // Do nothing if the game is over
+
+            if (selectedEmojiIndex === null) {
+                resultDisplay.textContent = 'Please select an emoji to get a hint.';
+                resultDisplay.style.color = '#ffc107';
+                return;
+            }
+
+            if (currentScore >= HINT_COST) {
+                currentScore -= HINT_COST;
+                scoreDisplay.textContent = currentScore;
+                hintText.textContent = `Hint: ${emojiData[selectedEmojiIndex].hint}`;
+                hintModal.style.display = 'block';
+            } else {
+                resultDisplay.textContent = `Not enough points for a hint. Need ${HINT_COST} points.`;
+                resultDisplay.style.color = '#ffc107';
+            }
+        }
+
+        // --- Event Listeners ---
+        submitButton.addEventListener('click', checkAnswer);
+        nextButton.addEventListener('click', nextRound);
+        restartButton.addEventListener('click', restartGame);
+        hintButton.addEventListener('click', showHint);
+        closeHintButton.addEventListener('click', () => hintModal.style.display = 'none');
+
+        // --- Initial Setup ---
+        highScoreDisplay.textContent = highScore;
+        displayEmojis();
+
+        // --- Prevent Accidental Reloads ---
+        window.addEventListener('beforeunload', function(e) {
+            if (currentRound > 1 || currentScore > 0) {
+                e.preventDefault();
+                e.returnValue = ''; // Required for some browsers
+            }
+        });
     </script>
 </body>
 
