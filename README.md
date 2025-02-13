@@ -1,6 +1,6 @@
 # EmojiQuiz 😃🤔🎉
 
-[![GitHub Pages Status](https://img.shields.io/badge/GitHub%20Pages-Deployed-brightgreen)](<GitHub Pages URL을 여기에 넣으세요>)
+[![GitHub Pages Status](https://img.shields.io/badge/GitHub%20Pages-Deployed-brightgreen)](https://hwkims.github.io/EmojiQuiz/)
 
 ## 📝 소개
 
@@ -27,7 +27,7 @@
 
 별도의 설치 과정 없이, 웹 브라우저에서 `index.html` 파일을 열면 바로 게임을 즐길 수 있습니다.
 
-또는, GitHub Pages를 통해 배포된 링크(<GitHub Pages URL을 여기에 넣으세요>)를 클릭하여 플레이할 수도 있습니다.
+또는, GitHub Pages를 통해 배포된 링크(https://hwkims.github.io/EmojiQuiz/)를 클릭하여 플레이할 수도 있습니다.
 
 ## 🛠️ 기술 스택
 
