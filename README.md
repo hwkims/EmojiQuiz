@@ -27,8 +27,9 @@
 
 별도의 설치 과정 없이, 웹 브라우저에서 `index.html` 파일을 열면 바로 게임을 즐길 수 있습니다.
 
-또는, GitHub Pages를 통해 배포된 링크(https://hwkims.github.io/EmojiQuiz/)를 클릭하여 플레이할 수도 있습니다.
+또는, GitHub Pages를 통해 배포된 링크를 클릭하여 플레이할 수도 있습니다.
 
+(https://hwkims.github.io/EmojiQuiz/)
 ## 🛠️ 기술 스택
 
 *   **HTML:** 웹 페이지의 구조
