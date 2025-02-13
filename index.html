@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmojiQuiz</title>
+    <style>
+        /* Reset and Base Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #343a40;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Game Container */
+        #game-container {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            max-width: 600px;
+            /* Responsive width */
+            width: 90%;
+        }
+
+        /* Title */
+        h1 {
+            color: #007bff;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        /* Emoji Cards */
+        #emoji-display {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            /* Wrap cards on smaller screens */
+            margin-bottom: 20px;
+        }
+
+        .emoji-card {
+            font-size: 3rem;
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #e9ecef;
+        }
+
+        .emoji-card:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            filter: brightness(1.1);
+        }
+
+        /* Selected Card */
+        .emoji-card.selected {
+            background-color: #cce5ff;
+            /* Light blue for selected */
+            border: 2px solid #007bff;
+        }
+
+        /* Input and Button */
+        #input-container {
+            margin-bottom: 20px;
+        }
+
+        #answer-input {
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            margin-right: 10px;
+            width: 60%;
+            /* Responsive input */
+        }
+
+        #submit-button,
+        #next-button,
+        #restart-button,
+        #hint-button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        /* Button Colors */
+        #submit-button {
+            background-color: #28a745;
+        }
+
+        #next-button {
+            background-color: #007bff;
+        }
+
+        #restart-button {
+            background-color: #dc3545;
+        }
+
+        #hint-button {
+            background-color: #ffc107;
+            margin-right: 10px;
+        }
+
+        /* Button Hover Effects */
+        #submit-button:hover,
+        #next-button:hover,
+        #restart-button:hover,
+        #hint-button:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        /* Result Text */
+        #result {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: color 0.3s ease;
+            /* Smooth color transition */
+        }
+        #result.correct{
+          animation: correct-jump 0.5s ;
+        }
+
+        #result.incorrect {
+            color: #dc3545;
+        }
+
+        /* Scoreboard */
+        #scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        /* Modal (for Hint) */
+        #hint-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            /* Make sure modal is on top */
+        }
+
+        #hint-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #close-hint {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+         #close-hint:hover{
+           filter: brightness(1.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #game-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .emoji-card {
+                font-size: 2.5rem;
+            }
+            #answer-input{
+              width: 90%;
+            }
+        }
+        /* 정답 맞췄을 때 뿅 하는 애니메이션 */
+        @keyframes correct-jump {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px); /* 위로 20px 이동 */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <h1>EmojiQuiz</h1>
+
+        <div id="emoji-display"></div>
+
+        <div id="input-container">
+            <button id="hint-button">Hint</button>
+            <input type="text" id="answer-input" placeholder="Enter your answer" autocomplete="off">
+            <button id="submit-button">Submit</button>
+        </div>
+
+        <div id="scoreboard">
+            <div>Score: <span id="score">0</span></div>
+            <div>Round: <span id="round">1</span></div>
+             <div>High Score: <span id="high-score">0</span></div>
+        </div>
+
+        <div id="result"></div>
+        <button id="next-button" style="display: none;">Next</button>
+        <button id="restart-button">Restart</button>
+
+        <!-- Hint Modal -->
+        <div id="hint-modal">
+            <div id="hint-content">
+                <p id="hint-text"></p>
+                <button id="close-hint">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      // DOM Elements
+      const emojiDisplay = document.getElementById('emoji-display');
+      const answerInput = document.getElementById('answer-input');
+      const submitButton = document.getElementById('submit-button');
+      const resultDisplay = document.getElementById('result');
+      const scoreDisplay = document.getElementById('score');
+      const roundDisplay = document.getElementById('round');
+      const highScoreDisplay = document.getElementById('high-score');
+      const nextButton = document.getElementById('next-button');
+      const restartButton = document.getElementById('restart-button');
+      const hintButton = document.getElementById('hint-button');
+      const hintModal = document.getElementById('hint-modal');
+      const hintText = document.getElementById('hint-text');
+      const closeHintButton = document.getElementById('close-hint');
+
+      // Game Data and Constants
+      const emojiData = [
+          { emoji: "😀", answer: "happy", hint: "Feeling good" },
+          { emoji: "😂", answer: "lol", hint: "Laughing out loud" },
+          { emoji: "👍", answer: "thumbs up", hint: "Positive gesture" },
+          { emoji: "🎉", answer: "celebration", hint: "Party time" },
+          { emoji: "🍕", answer: "pizza", hint: "Italian food" },
+          { emoji: "🐶", answer: "dog", hint: "Man's best friend"},
+          { emoji: "🐱", answer: "cat", hint: "Feline friend"},
+          { emoji: "🍎", answer: "apple", hint: "A fruit"},
+          { emoji: "🍌", answer: "banana", hint: "Yellow fruit"},
+          { emoji: "🎂", answer: "cake", hint: "Dessert"}
+      ];
+      const MAX_ROUNDS = 5;
+      const NUM_EMOJIS_PER_ROUND = 3;
+      const HINT_COST = 2; // 힌트 사용 비용
+
+      // Game State
+      let currentRound = 1;
+      let currentScore = 0;
+      let highScore = getHighScore(); // Get high score from URL or cookie
+      let currentEmojiIndices = []; // Store indices of currently displayed emojis
+      let selectedEmojiIndex = null; // 현재 선택된 이모지
+
+
+      // --- Helper Functions ---
+      // Function to get high score (from URL, then cookie, then default to 0)
+      function getHighScore() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let score = parseInt(urlParams.get('score'));
+
+        if (!isNaN(score)) {
+            return score;
+        }
+
+        score = parseInt(document.cookie.replace(/(?:(?:^|.*;\s*)highScore\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
+        return isNaN(score) ? 0 : score;
+      }
+
+      // Function to save high score (both to cookie and URL)
+      function saveHighScore(score) {
+          document.cookie = `highScore=${score}; max-age=${60 * 60 * 24 * 365}; path=/; SameSite=Lax`; // 1 year
+          // Update URL (without reloading the page)
+          const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?score=${score}`;
+          window.history.pushState({ path: newurl }, '', newurl);
+      }
+      // Function to play sound
+      function playSound(soundFile) {
+          const audio = new Audio(soundFile);
+          audio.play();
+      }
+
+
+
+      // --- Game Logic Functions ---
+
+      // 1. 이모지 표시 (Display Emojis)
+      function displayEmojis() {
+          emojiDisplay.innerHTML = ''; // Clear previous emojis
+          currentEmojiIndices = []; // Reset current emoji indices
+
+          while (currentEmojiIndices.length < NUM_EMOJIS_PER_ROUND) {
+              const randomIndex = Math.floor(Math.random() * emojiData.length);
+              if (!currentEmojiIndices.includes(randomIndex)) {
+                  currentEmojiIndices.push(randomIndex);
+                  const emojiCard = document.createElement('div');
+                  emojiCard.classList.add('emoji-card');
+                  emojiCard.textContent = emojiData[randomIndex].emoji;
+                  emojiCard.dataset.index = randomIndex; // Store index for later use
+
+                  emojiCard.addEventListener('click', selectEmoji); // Add click listener
+                  emojiDisplay.appendChild(emojiCard);
+              }
+          }
+      }
+
+
+      // 2. 이모지 선택 (Select Emoji)
+      function selectEmoji(event) {
+          // Deselect any previously selected emoji
+          const previouslySelected = document.querySelector('.emoji-card.selected');
+          if (previouslySelected) {
+              previouslySelected.classList.remove('selected');
+          }
+
+          // Select the clicked emoji
+          const clickedEmoji = event.target;
+          clickedEmoji.classList.add('selected');
+          selectedEmojiIndex = parseInt(clickedEmoji.dataset.index);
+      }
+
+
+      // 3. 정답 확인 (Check Answer)
+      function checkAnswer() {
+
+          if (selectedEmojiIndex === null) {
+              resultDisplay.textContent = 'Please select an emoji.';
+              resultDisplay.style.color = '#ffc107'; // Warning color
+              return;
+          }
+          const userAnswer = answerInput.value.trim().toLowerCase();
+          const correctAnswer = emojiData[selectedEmojiIndex].answer.toLowerCase();
+
+          if (userAnswer === correctAnswer) {
+              resultDisplay.textContent = 'Correct!';
+              resultDisplay.classList.add('correct'); // Add class for animation
+              resultDisplay.classList.remove('incorrect');
+              playSound('correct.mp3'); // Add sound effect
+              currentScore += (round * 5);
+              scoreDisplay.textContent = currentScore;
+
+              if (currentScore > highScore) {
+                  highScore = currentScore;
+                  highScoreDisplay.textContent = highScore;
+                  saveHighScore(highScore);
+              }
+
+              if (currentRound < MAX_ROUNDS) {
+                  nextButton.style.display = 'inline-block';
+              } else {
+                  resultDisplay.textContent = `Game Over! Final score: ${currentScore}`;
+                  restartButton.style.display = 'inline-block';
+              }
+
+          } else {
+              resultDisplay.textContent = `Incorrect. The answer was ${correctAnswer}.`;
+              resultDisplay.classList.add('incorrect');
+              playSound('incorrect.mp3'); // Add sound effect
+          }
+
+
+          // Disable further input until next round
+          answerInput.disabled = true;
+          submitButton.disabled = true;
+          hintButton.disabled = true;
+          // Remove selected class from all emojis
+          document.querySelectorAll('.emoji-card').forEach(card => {
+            card.classList.remove('selected');
+            card.style.pointerEvents = 'none'; // Disable clicks
+
+          });
+
+      }
+
+
+
+      // 4. 다음 라운드 (Next Round)
+      function nextRound() {
+          currentRound++;
+          roundDisplay.textContent = currentRound;
+          resultDisplay.textContent = ''; // Clear result
+          resultDisplay.classList.remove('correct', 'incorrect');
+          answerInput.value = '';
+          answerInput.disabled = false;
+          submitButton.disabled = false;
+          hintButton.disabled = false;
+          nextButton.style.display = 'none';
+          selectedEmojiIndex = null; // Reset selected emoji
+           document.querySelectorAll('.emoji-card').forEach(card => {
+            card.style.pointerEvents = 'auto'; // Re-enable clicks
+           });
+
+
+          displayEmojis(); // Display new emojis
+      }
+
+
+
+      // 5. 게임 재시작 (Restart Game)
+      function restartGame() {
+          currentRound = 1;
+          currentScore = 0;
+          roundDisplay.textContent = currentRound;
+          scoreDisplay.textContent = currentScore;
+          resultDisplay.textContent = '';
+          answerInput.value = '';
+          answerInput.disabled = false;
+          submitButton.disabled = false;
+          hintButton.disabled = false;
+          nextButton.style.display = 'none';
+          restartButton.style.display = 'none';
+          displayEmojis();
+          document.querySelectorAll('.emoji-card').forEach(card => {
+            card.style.pointerEvents = 'auto'; // Re-enable clicks
+           });
+      }
+
+      // 6. 힌트 보기
+      function showHint() {
+
+          if (selectedEmojiIndex === null) {
+                resultDisplay.textContent = 'Please select an emoji to get a hint.';
+                resultDisplay.style.color = '#ffc107'; // Warning color
+                return;
+          }
+
+          if(currentScore >= HINT_COST){
+            currentScore -= HINT_COST;
+            scoreDisplay.textContent = currentScore;
+            hintText.textContent = `Hint: ${emojiData[selectedEmojiIndex].hint}`;
+            hintModal.style.display = 'block';
+          } else {
+            resultDisplay.textContent = `Not enough points for a hint. Need ${HINT_COST} points.`;
+            resultDisplay.style.color = '#ffc107'
+          }
+
+      }
+
+
+
+      // --- Event Listeners ---
+      submitButton.addEventListener('click', checkAnswer);
+      nextButton.addEventListener('click', nextRound);
+      restartButton.addEventListener('click', restartGame);
+      hintButton.addEventListener('click', showHint);
+      closeHintButton.addEventListener('click', () => hintModal.style.display = 'none');
+
+      // --- Initial Setup ---
+      highScoreDisplay.textContent = highScore; // Display high score
+      displayEmojis(); // Start the game by displaying emojis
+
+
+      // --- Prevent Accidental Reloads ---
+      window.addEventListener('beforeunload', function (e) {
+        if (currentRound > 1 || currentScore > 0){ // Prevent closing when game is active
+          e.preventDefault();
+          e.returnValue = ''; // Required for some browsers
+        }
+
+      });
+    </script>
+</body>
+
+</html>
