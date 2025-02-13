@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmojiQuiz</title>
     <style>
-        /* (스타일은 이전 코드와 동일하므로 생략) */
         /* Reset and Base Styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -28,7 +27,6 @@
             padding: 30px;
             text-align: center;
             max-width: 600px;
-            /* Responsive width */
             width: 90%;
         }
 
@@ -39,16 +37,19 @@
             margin-bottom: 20px;
             animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-          100% {
-            transform: scale(1);
-          }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         /* Emoji Cards */
@@ -56,7 +57,6 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            /* Wrap cards on smaller screens */
             margin-bottom: 20px;
         }
 
@@ -79,7 +79,6 @@
         /* Selected Card */
         .emoji-card.selected {
             background-color: #cce5ff;
-            /* Light blue for selected */
             border: 2px solid #007bff;
         }
 
@@ -95,7 +94,6 @@
             border-radius: 5px;
             margin-right: 10px;
             width: 60%;
-            /* Responsive input */
         }
 
         #submit-button,
@@ -144,10 +142,10 @@
             font-weight: bold;
             margin-top: 20px;
             transition: color 0.3s ease;
-            /* Smooth color transition */
         }
-        #result.correct{
-          animation: correct-jump 0.5s ;
+
+        #result.correct {
+            animation: correct-jump 0.5s;
         }
 
         #result.incorrect {
@@ -172,7 +170,6 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 10;
-            /* Make sure modal is on top */
         }
 
         #hint-content {
@@ -195,8 +192,9 @@
             cursor: pointer;
             border-radius: 5px;
         }
-         #close-hint:hover{
-           filter: brightness(1.2);
+
+        #close-hint:hover {
+            filter: brightness(1.2);
         }
 
         /* Responsive adjustments */
@@ -212,17 +210,21 @@
             .emoji-card {
                 font-size: 2.5rem;
             }
-            #answer-input{
-              width: 90%;
+
+            #answer-input {
+                width: 90%;
             }
         }
+
         /* 정답 맞췄을 때 뿅 하는 애니메이션 */
         @keyframes correct-jump {
-            0%, 100% {
+            0%,
+            100% {
                 transform: translateY(0);
             }
+
             50% {
-                transform: translateY(-20px); /* 위로 20px 이동 */
+                transform: translateY(-20px);
             }
         }
     </style>
