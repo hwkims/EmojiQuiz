@@ -1,6 +1,8 @@
 # EmojiQuiz 😃🤔🎉
 
 [![GitHub Pages Status](https://img.shields.io/badge/GitHub%20Pages-Deployed-brightgreen)](https://hwkims.github.io/EmojiQuiz/)
+![image](https://github.com/user-attachments/assets/c589e34e-e2d7-44f4-add4-24b7031084d0)
+https://www.youtube.com/watch?v=XfAMwjaVwCQ
 
 ## 📝 소개
 
